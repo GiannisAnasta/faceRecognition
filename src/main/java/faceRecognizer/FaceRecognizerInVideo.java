@@ -31,6 +31,12 @@ public class FaceRecognizerInVideo {
     private static final String trainingDir = "/home/giannis/Downloads/dataFaces/PhotoData/";
     private static String nameToSave = "";
 
+    private static boolean isRealyFace(Mat maybeFace, CascadeClassifier frontalFaceCascade) {
+                   RectVector detectedFaces = new RectVector();
+            frontalFaceCascade.detectMultiScale(maybeFace, detectedFaces);
+            return detectedFaces.size()>0;
+    }
+
     private static class MyAL implements java.awt.event.ActionListener {
 
         //final String toVerificationDir = "/home/giannis/Downloads/javacv/src/UnverifiedPhotoData/";
@@ -95,8 +101,8 @@ int sumSide = 0;
         }
         CascadeClassifier frontalFaceCascade = new CascadeClassifier(
                 "/home/giannis/OpenCV3.2/OPEN_CV/opencv/data/haarcascades/haarcascade_frontalface_alt2.xml");
-        CascadeClassifier profileFaceCascade = new CascadeClassifier(
-                "/home/giannis/OpenCV3.2/OPEN_CV/opencv/data/haarcascades_cuda/haarcascade_profileface.xml");
+//        CascadeClassifier profileFaceCascade = new CascadeClassifier(
+//                "/home/giannis/OpenCV3.2/OPEN_CV/opencv/data/haarcascades_cuda/haarcascade_profileface.xml");
 
         Frame videoFrame = null;
         Mat videoMat = new Mat();
@@ -144,14 +150,17 @@ int sumSide = 0;
             cvtColor(videoMat, videoMatGray, COLOR_BGRA2GRAY);
             equalizeHist(videoMatGray, videoMatGray);
             RectVector detectedFaces = new RectVector();
-            RectVector detectedFacesProf = new RectVector();
+//            RectVector detectedFacesProf = new RectVector();
             // Find the faces in the frame:
             frontalFaceCascade.detectMultiScale(videoMatGray, detectedFaces);
-            profileFaceCascade.detectMultiScale(videoMatGray, detectedFacesProf);
+//            profileFaceCascade.detectMultiScale(videoMatGray, detectedFacesProf);
 
             for (int i = 0; i < detectedFaces.size(); i++) {
                 Rect detectedFaceBorders = detectedFaces.get(i);
                 final Mat detectedFace = new Mat(videoMatGray, detectedFaceBorders);
+                if (!isRealyFace(detectedFace,frontalFaceCascade)){
+                    continue;
+                }
                 saveButtonListener.setDetectedFace(detectedFace);
 
                 int n[] = new int[1];
@@ -183,44 +192,44 @@ int sumSide = 0;
                     MyAL.saveImage(dir, "" + prediction, detectedFace);
                 }
             }
-            for (int i = 0; i < detectedFacesProf.size(); i++) {
-                Rect detectedFaceBorders = detectedFacesProf.get(i);
-                final Mat detectedFace = new Mat(videoMatGray, detectedFaceBorders);
-                saveButtonListener.setDetectedFace(detectedFace);
-
-                if (detectedFacesProf.size() > 0) {
-                sumSide = sumSide + 1;
-                System.out.println("Side faces :" + sumSide);
-                }
-                int n[] = new int[1];
-                double p[] = new double[1];
-                faceRecognizer.predict(detectedFace.getUMat(USAGE_DEFAULT), n, p);
-                int prediction = n[0];
-                double bound = 65.0;
-
-//                Double dble = p[0];
-                DecimalFormat df = new DecimalFormat(".00");
-                System.out.println(df.format(p[0]));
-
-                rectangle(videoMat, detectedFaceBorders, new Scalar(255, 0, 255, 0));
-                String box_text = "Predicted Person = " + (p[0] > bound ? "unknown " + prediction : prediction);
-                int pos_x = Math.max(detectedFaceBorders.tl().x() - 10, 0);
-                int pos_y = Math.max(detectedFaceBorders.tl().y() - 10, 0);
-                putText(videoMat, box_text, new Point(pos_x, pos_y),
-                        FONT_HERSHEY_PLAIN, 1.0, new Scalar(255, 0, 0, 2.0));
-                pos_x = Math.max(detectedFaceBorders.tl().x() - 25, 0);
-                pos_y = Math.max(detectedFaceBorders.tl().y() - 25, 0);
-                putText(videoMat, "distance " + df.format(p[0]), new Point(pos_x, pos_y),
-                        FONT_HERSHEY_PLAIN, 1.0, new Scalar(0, 0, 255, 2.0));
-                if (p[0] > bound) {
-                    String dir = "/home/giannis/Downloads/dataFaces/UnverifiedPhotoData/" + prediction + "/";
-                    File directory = new File(String.valueOf(dir));
-                    if (!directory.exists()) {
-                        directory.mkdirs();
-                    }
-                    MyAL.saveImage(dir, "" + prediction, detectedFace);
-                }
-            }
+//            for (int i = 0; i < detectedFacesProf.size(); i++) {
+//                Rect detectedFaceBorders = detectedFacesProf.get(i);
+//                final Mat detectedFace = new Mat(videoMatGray, detectedFaceBorders);
+//                saveButtonListener.setDetectedFace(detectedFace);
+//
+//                if (detectedFacesProf.size() > 0) {
+//                sumSide = sumSide + 1;
+//                System.out.println("Side faces :" + sumSide);
+//                }
+//                int n[] = new int[1];
+//                double p[] = new double[1];
+//                faceRecognizer.predict(detectedFace.getUMat(USAGE_DEFAULT), n, p);
+//                int prediction = n[0];
+//                double bound = 65.0;
+//
+////                Double dble = p[0];
+//                DecimalFormat df = new DecimalFormat(".00");
+//                System.out.println(df.format(p[0]));
+//
+//                rectangle(videoMat, detectedFaceBorders, new Scalar(255, 0, 255, 0));
+//                String box_text = "Predicted Person = " + (p[0] > bound ? "unknown " + prediction : prediction);
+//                int pos_x = Math.max(detectedFaceBorders.tl().x() - 10, 0);
+//                int pos_y = Math.max(detectedFaceBorders.tl().y() - 10, 0);
+//                putText(videoMat, box_text, new Point(pos_x, pos_y),
+//                        FONT_HERSHEY_PLAIN, 1.0, new Scalar(255, 0, 0, 2.0));
+//                pos_x = Math.max(detectedFaceBorders.tl().x() - 25, 0);
+//                pos_y = Math.max(detectedFaceBorders.tl().y() - 25, 0);
+//                putText(videoMat, "distance " + df.format(p[0]), new Point(pos_x, pos_y),
+//                        FONT_HERSHEY_PLAIN, 1.0, new Scalar(0, 0, 255, 2.0));
+//                if (p[0] > bound) {
+//                    String dir = "/home/giannis/Downloads/dataFaces/UnverifiedPhotoData/" + prediction + "/";
+//                    File directory = new File(String.valueOf(dir));
+//                    if (!directory.exists()) {
+//                        directory.mkdirs();
+//                    }
+//                    MyAL.saveImage(dir, "" + prediction, detectedFace);
+//                }
+//            }
             canvas.showImage(videoFrame);
             char key = (char) waitKey(20);
             // Exit this loop on escape:
